@@ -3,7 +3,7 @@
 IDA Pro Plugin (tested on version 9.2)
 
 Description:
-  This plugin decodes encrypted anogs strings by detecting function patterns and performing mapping. It is designed for the 32-   bit version of the anogs library. While it may work with other games using anogs, this has not been tested.
+  This plugin decodes encrypted anogs(Pubg Mobile Gl Version) strings by detecting function patterns and performing mapping. It is designed for the 32-bit version of the anogs library. While it may work with other games using anogs, this has not been tested.
 
 Update :
   To use the plugin with a newer version of the library, update the following constants in the plugin:
