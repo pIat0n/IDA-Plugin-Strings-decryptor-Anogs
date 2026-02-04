@@ -1,0 +1,1 @@
+# IDA-Plugin-Strings-decryptor-Anogs
