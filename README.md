@@ -78,15 +78,24 @@ You can directly run any architecture-specific script from the `plugins/` folder
 ## 🔬 Anogs String Encryption Algorithm
 
 Encrypted strings are stored in a contiguous pool at `Base + STRING_ARRAY_RVA + Offset`:
-1. `Byte[0]` — Single-byte seed key $k_0$.
-2. `Byte[1]` — Encrypted string length: $\text{Length} = \text{Byte}[1] \oplus k_0$.
-3. `Byte[2 .. Length + 1]` — Ciphertext bytes.  
-   Each byte $j$ is decrypted as:
-   $$\text{Plain}[j] = \text{Cipher}[j] \oplus k$$
-   After each byte, the rolling key updates according to:
-   $$k = (((k + j) \ \& \ \text{0xFF}) \oplus \text{xor\_key} + \delta) \ \& \ \text{0xFF}$$
+
+1. `Byte[0]` — Single-byte seed key `k0`.
+2. `Byte[1]` — Encrypted string length:
+   ```python
+   length = byte[1] ^ k0
+   ```
+3. `Byte[2 .. Length + 1]` — Ciphertext bytes. Decrypted byte-by-byte with a rolling key:
+   ```python
+   k = k0
+   for j in range(length):
+       plain[j] = cipher[j] ^ k
+       k = (((k + j) & 0xFF) ^ xor_key)
+       k = (k + delta) & 0xFF
+   ```
 4. `Byte[Length + 2]` — Verification checksum byte:
-   $$(\text{CheckByte} \oplus k_0) \equiv \bigoplus_{j=0}^{\text{Length}-1} \text{Plain}[j]$$
+   ```python
+   (check_byte ^ k0) == (plain[0] ^ plain[1] ^ ... ^ plain[length - 1])
+   ```
 
 ---
 
