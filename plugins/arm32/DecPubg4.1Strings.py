@@ -7,6 +7,12 @@ import ida_xref
 import ida_ua
 import ida_bytes
 
+try:
+    import ida_hexrays
+    HAS_HEXRAYS = ida_hexrays.init_hexrays_plugin()
+except Exception:
+    HAS_HEXRAYS = False
+
 TARGETS = ["sub_38D534", "sub_38D548"]
 STRING_ARRAY_RVA = 0xCB964
 PARTIAL_KEY_RVA = 0x3F08A0
@@ -309,18 +315,22 @@ def main(target_specs=None):
 
                 if user_comment:
                     idc.set_cmt(ea, user_comment, 0)
-                    try:
-                        if ida_hexrays.init_hexrays_plugin():
+                    if HAS_HEXRAYS:
+                        try:
                             f = ida_funcs.get_func(ea)
                             if f:
                                 cfunc = ida_hexrays.decompile(f)
-                                tl = ida_hexrays.treeloc_t()
-                                tl.ea = ea
-                                tl.itp = ida_hexrays.ITP_SEMI
-                                ida_hexrays.set_user_cmt(cfunc, tl, user_comment)
-                                cfunc.save_user_cmts()
-                    except Exception:
-                        pass
+                                if cfunc:
+                                    tl = ida_hexrays.treeloc_t()
+                                    tl.ea = ea
+                                    tl.itp = ida_hexrays.ITP_SEMI
+                                    if hasattr(cfunc, "set_user_cmt"):
+                                        cfunc.set_user_cmt(tl, user_comment)
+                                    elif hasattr(ida_hexrays, "set_user_cmt"):
+                                        ida_hexrays.set_user_cmt(cfunc, tl, user_comment)
+                                    cfunc.save_user_cmts()
+                        except Exception:
+                            pass
 
                 caller_strings.append(caller_str)
 

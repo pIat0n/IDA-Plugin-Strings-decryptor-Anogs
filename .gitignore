@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDA database files
+*.id0
+*.id1
+*.id2
+*.nam
+*.til
+*.idb
+*.i64
