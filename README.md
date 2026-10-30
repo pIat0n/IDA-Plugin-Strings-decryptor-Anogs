@@ -1,54 +1,54 @@
 # IDA-Plugin-Strings-decryptor-Anogs 🐾
 
-Комплексный плагин-дешифратор строк для **IDA Pro** (протестирован на IDA Pro 7.x, 8.x, 9.2).  
-Предназначен для автоматического поиска, извлечения и расшифровки обфусцированных строк из библиотеки античита **Anogs / ACE (Anti-Cheat Expert / TSS)**, используемой в мобильных играх (включая **PUBG Mobile Global Version**).
+Comprehensive string decryptor plugin for **IDA Pro** (tested on IDA Pro 7.x, 8.x, and 9.2).  
+Designed for automatic detection, extraction, and decryption of obfuscated strings in the **Tencent Anogs / ACE (Anti-Cheat Expert / TSS)** binary libraries used in mobile games (including **PUBG Mobile Global Version**).
 
-Поддерживаются обе основные архитектуры:
-- **ARM 32-bit (armeabi-v7a)** — профили для версий PUBG Mobile 4.0 и 4.1.
-- **ARM 64-bit (arm64-v8a)** — полнофункциональный движок с автодетектом целевых функций и RVA таблицы строк (.rodata).
-
----
-
-## 🌟 Основные возможности
-
-1. **Автоматическое определение архитектуры**:
-   - Главный скрипт `DecryptStringsAuto.py` определяет разрядность открытой базы IDB (32-bit vs 64-bit) и версию игры, направляя выполнение в нужный модуль.
-2. **Эвристический анализ функций-дешифраторов**:
-   - Автоматический поиск всех функций-обёрток по графу перекрёстных ссылок (xrefs) к целевым функциям доступа.
-   - Статический анализ машинного кода (ARM/ARM64) для извлечения параметров дешифрования: скользящего ключа `xor_key` (инструкция `EOR`) и шага инкремента `delta` (инструкция `ADDS` / `ADD`).
-3. **Парсинг аргументов вызова**:
-   - Для ARM32: декодирование констант смещения через `MOV`, `MOVW`, `MOVT` в регистре `R0`.
-   - Для ARM64: декодирование аргументов в `W0`/`X0` через `MOV`, `MOVZ`, `MOVN`, `ORR`, `WZR`, `XZR`.
-4. **Интеграция с Hex-Rays Decompiler**:
-   - Добавление строковых комментариев в дизассемблерный листинг.
-   - Пакетное комментирование псевдокода Hex-Rays без замедления работы IDA.
-5. **Экспорт дампов**:
-   - Выгрузка результатов в форматированные текстовые таблицы `.txt` и машиночитаемый `.json`.
+Supports both major architectures:
+- **ARM 32-bit (armeabi-v7a)** — preconfigured profiles for PUBG Mobile 4.0 and 4.1.
+- **ARM 64-bit (arm64-v8a)** — full-featured engine with automatic detection of target accessor functions and string table RVA (`.rodata`) (tested on PUBG Mobile 4.6).
 
 ---
 
-## 📁 Структура репозитория
+## 🌟 Key Features
+
+1. **Automatic Architecture & Version Detection**:
+   - The master script `DecryptStringsAuto.py` automatically detects the bitness of the active IDB (32-bit vs 64-bit) and the game version, routing execution to the corresponding engine module.
+2. **Heuristic Analysis of Decryptor Functions**:
+   - Automated identification of decryptor wrapper functions by traversing cross-reference (xref) graphs to target accessor stubs.
+   - Machine code pattern matching (ARM / ARM64) to extract algorithm parameters dynamically: rolling key `xor_key` (via `EOR` instructions) and iteration step `delta` (via `ADDS` / `ADD` instructions).
+3. **Call Argument Parsing**:
+   - **ARM32**: decodes immediate offset arguments passed via register `R0` across `MOV`, `MOVW`, and `MOVT` instruction sequences.
+   - **ARM64**: decodes `W0`/`X0` argument loading across `MOV`, `MOVZ`, `MOVN`, `ORR`, and zero registers `WZR`/`XZR`.
+4. **Hex-Rays Decompiler Integration**:
+   - Injects decrypted strings as inline comments directly into disassembly listings.
+   - High-performance batched commenting in Hex-Rays pseudocode without decompilation slowdowns.
+5. **Detailed Dumps & Reports**:
+   - Automatically exports decrypted strings to formatted human-readable `.txt` tables and structured `.json` datasets with full call site telemetry.
+
+---
+
+## 📁 Repository Structure
 
 ```
 IDA-Plugin-Strings-decryptor-Anogs/
-├── DecryptStringsAuto.py           # 🚀 Универсальный загрузчик с автоопределением архитектуры и версии
+├── DecryptStringsAuto.py           # 🚀 Master universal entry point with auto-detection
 │
-├── plugins/                        # 🧩 Модули расшифровки по архитектурам
-│   ├── arm32/
-│   │   ├── DecPubg4.1Strings.py    # Скрипт под PUBG Mobile 4.1 (ARM32)
-│   │   └── DecPubg4.0Strings.py    # Скрипт под PUBG Mobile 4.0 (ARM32)
-│   └── arm64/
-│       └── DecAnogsArm64Strings.py  # Скрипт под ARM64 с автодетектом TARGETS и таблицы строк
+├── plugins/                        # 🧩 Architecture-specific decryptor modules
+│   ├── arm32/                      # 🔹 32-bit ARM (armeabi-v7a)
+│   │   ├── DecPubg4.1Strings.py    # Plugin for PUBG Mobile 4.1 (ARM32)
+│   │   └── DecPubg4.0Strings.py    # Plugin for PUBG Mobile 4.0 (ARM32)
+│   └── arm64/                      # 🔹 64-bit ARM (arm64-v8a)
+│       └── DecAnogsArm64Strings.py  # Plugin for ARM64 with auto-detect of TARGETS & table RVA
 │
-├── dumps/                          # 📄 Дампы расшифрованных строк и мест вызовов
+├── dumps/                          # 📄 Decrypted strings tables and call telemetry
 │   ├── arm32/
-│   │   ├── Pubg 4.1 Decrypted.txt  # 3175 вызовов, 100 дешифраторов (PUBG 4.1)
-│   │   └── Pubg 4.0 Decrypted.txt  # Дамп для PUBG 4.0
+│   │   ├── Pubg 4.1 Decrypted.txt  # 3,175 call sites, 100 decryptors (PUBG 4.1)
+│   │   └── Pubg 4.0 Decrypted.txt  # String dump for PUBG 4.0
 │   └── arm64/
-│       ├── Pubg Decrypted ARM64.txt   # 3199 вызовов, 2087 уникальных строк (ARM64)
-│       ├── Pubg Decrypted ARM64.json  # Полная JSON-структура с адресами вызовов
-│       ├── decrypted_strings.txt      # Свежий дамп из активной базы
-│       └── decrypted_strings.json     # Свежий JSON-дамп
+│       ├── Pubg Decrypted ARM64.txt   # 3,199 call sites, 2,087 unique strings (ARM64)
+│       ├── Pubg Decrypted ARM64.json  # Complete structured JSON dataset
+│       ├── decrypted_strings.txt      # Latest dump from active IDB
+│       └── decrypted_strings.json     # Latest structured JSON dump
 │
 ├── .gitignore
 ├── LICENSE                         # MIT License
@@ -57,61 +57,61 @@ IDA-Plugin-Strings-decryptor-Anogs/
 
 ---
 
-## 🚀 Использование
+## 🚀 Usage
 
-### Способ 1: Универсальный запуск (Рекомендуется)
-1. Откройте файл `libanogs.so` в **IDA Pro** (32-битной или 64-битной версии).
-2. Дождитесь завершения автоанализа.
-3. В верхнем меню выберите:  
-   `File` → `Script file...` (горячая клавиша `Alt + F7`).
-4. Выберите файл **`DecryptStringsAuto.py`** в корне репозитория.
-5. Скрипт автоматически распознает архитектуру и профиль, расшифрует строки и расставит комментарии!
+### Method 1: Universal Auto-Runner (Recommended)
+1. Open the target `libanogs.so` binary in **IDA Pro** (either 32-bit or 64-bit IDA).
+2. Wait until auto-analysis completes.
+3. In the top menu, navigate to:  
+   `File` → `Script file...` (or press `Alt + F7`).
+4. Select **`DecryptStringsAuto.py`** from the repository root.
+5. The script will automatically detect the binary architecture and version, decrypt all strings, and apply comments to both assembly and Hex-Rays pseudocode!
 
-### Способ 2: Запуск конкретного скрипта
-Вы можете напрямую запустить скрипт под нужную версию из папки `plugins/`:
-- Для 32-битного PUBG Mobile 4.1: `plugins/arm32/DecPubg4.1Strings.py`
-- Для 32-битного PUBG Mobile 4.0: `plugins/arm32/DecPubg4.0Strings.py`
-- Для 64-битного Anogs (v8a): `plugins/arm64/DecAnogsArm64Strings.py`
+### Method 2: Running a Specific Script
+You can directly run any architecture-specific script from the `plugins/` folder:
+- For 32-bit PUBG Mobile 4.1: `plugins/arm32/DecPubg4.1Strings.py`
+- For 32-bit PUBG Mobile 4.0: `plugins/arm32/DecPubg4.0Strings.py`
+- For 64-bit Anogs (v8a): `plugins/arm64/DecAnogsArm64Strings.py`
 
 ---
 
-## 🔬 Алгоритм шифрования Anogs
+## 🔬 Anogs String Encryption Algorithm
 
-Зашифрованные строки хранятся единым пулом по адресу `Base + STRING_ARRAY_RVA + Offset`:
-1. `Byte[0]` — базовый однобайтовый ключ `k0`.
-2. `Byte[1]` — длина строки, зашифрованная ключом: `Length = Byte[1] ^ k0`.
-3. `Byte[2 .. Length + 1]` — зашифрованные символы строки.  
-   Расшифровка каждого байта `j`:
+Encrypted strings are stored in a contiguous pool at `Base + STRING_ARRAY_RVA + Offset`:
+1. `Byte[0]` — Single-byte seed key $k_0$.
+2. `Byte[1]` — Encrypted string length: $\text{Length} = \text{Byte}[1] \oplus k_0$.
+3. `Byte[2 .. Length + 1]` — Ciphertext bytes.  
+   Each byte $j$ is decrypted as:
    $$\text{Plain}[j] = \text{Cipher}[j] \oplus k$$
-   После каждого байта скользящий ключ обновляется:
+   After each byte, the rolling key updates according to:
    $$k = (((k + j) \ \& \ \text{0xFF}) \oplus \text{xor\_key} + \delta) \ \& \ \text{0xFF}$$
-4. `Byte[Length + 2]` — байт контрольной суммы:
+4. `Byte[Length + 2]` — Verification checksum byte:
    $$(\text{CheckByte} \oplus k_0) \equiv \bigoplus_{j=0}^{\text{Length}-1} \text{Plain}[j]$$
 
 ---
 
-## 🔄 Адаптация под новые версии
+## 🔄 Updating for Newer Game Versions
 
-Если в новой версии игры изменились смещения:
+When adapting the plugin to a newer game update:
 
-### Для ARM64:
-Скрипт `plugins/arm64/DecAnogsArm64Strings.py` умеет **автоматически находить функции-аксессоры** и извлекать `STRING_ARRAY_RVA` из инструкций `ADR` / `ADRL`!  
-При необходимости вы можете вручную задать константы в начале скрипта:
+### For ARM64:
+`plugins/arm64/DecAnogsArm64Strings.py` features **automatic target accessor detection** and extracts `STRING_ARRAY_RVA` directly from `ADR` / `ADRL` assembly instructions!  
+If needed, you can override constants manually at the top of the file:
 ```python
 TARGETS = ["sub_XXXXXX", "sub_YYYYYY"]
 STRING_ARRAY_RVA = 0xXXXXX
 ```
 
-### Для ARM32:
-В скриптах `plugins/arm32/DecPubg4.XStrings.py` обновите константы:
-- `TARGETS` — имена двух целевых функций аксессоров.
-- `STRING_ARRAY_RVA` — RVA начала массива строк в секции данных.
-- `PARTIAL_KEY_RVA` — адрес таблицы вспомогательных ключей.
+### For ARM32:
+In `plugins/arm32/DecPubg4.XStrings.py`, update the following constants:
+- `TARGETS` — names or addresses of the two target accessor functions.
+- `STRING_ARRAY_RVA` — RVA of the encrypted string table in the data segment.
+- `PARTIAL_KEY_RVA` — RVA of the auxiliary key table.
 
 ---
 
-## 📬 Контакты
+## 📬 Contact & Collaboration
 
-По вопросам обновлений, улучшений или сотрудничества:
+For questions, updates, or collaboration:
 - **Telegram**: [@ReverseEng1neer](https://t.me/ReverseEng1neer)
 - **GitHub**: [pIat0n](https://github.com/pIat0n)
